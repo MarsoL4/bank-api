@@ -1,11 +1,13 @@
 package br.com.fiap.bank_api.model;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import lombok.Data;
 
 @Entity
 @Data
 public class Conta {
+    @Id
     private Long numero;
     //private agencia;
     private String nomeTitular; //obrigatório
