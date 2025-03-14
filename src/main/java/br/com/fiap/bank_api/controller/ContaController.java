@@ -52,7 +52,6 @@ public class ContaController {
     @PostMapping("cadastrar")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<Object> create(@Valid @RequestBody Conta conta) {
-        // Validações
         if (conta.getDataAbertura().isAfter(LocalDate.now())) {
             return ResponseEntity.badRequest().body("A data de abertura não pode ser no futuro.");
         }
@@ -132,35 +131,40 @@ public class ContaController {
 
  
     @PutMapping("/pix")
-    public ResponseEntity<Object> transferirPix(@RequestParam Long origemNumero, @RequestParam Long destinoNumero, @RequestParam double valor) {
+    public ResponseEntity<Object> transferirPix(
+            @RequestParam Long origemNumero, 
+            @RequestParam Long destinoNumero, 
+            @RequestParam double valor) {
+        
         if (valor <= 0) {
             return ResponseEntity.badRequest().body("O valor do PIX deve ser maior que zero.");
         }
-
+    
         Optional<Conta> contaOrigemOpt = repository.findById(origemNumero);
         Optional<Conta> contaDestinoOpt = repository.findById(destinoNumero);
-
+    
         if (contaOrigemOpt.isEmpty() || contaDestinoOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-
+    
         Conta contaOrigem = contaOrigemOpt.get();
         Conta contaDestino = contaDestinoOpt.get();
-
+    
         if (!contaOrigem.isAtiva() || !contaDestino.isAtiva()) {
             return ResponseEntity.badRequest().body("Uma das contas está inativa. PIX não permitido.");
         }
-
+    
         if (contaOrigem.getSaldoInicial() < valor) {
             return ResponseEntity.badRequest().body("Saldo insuficiente para realizar o PIX.");
         }
-
+    
+        // Transferência de valores
         contaOrigem.setSaldoInicial(contaOrigem.getSaldoInicial() - valor);
         contaDestino.setSaldoInicial(contaDestino.getSaldoInicial() + valor);
-
+    
         repository.save(contaOrigem);
         repository.save(contaDestino);
-
-        return ResponseEntity.ok("PIX realizado com sucesso.");
-    }
+    
+        return ResponseEntity.ok("PIX de R$ " + valor + " realizado com sucesso para a conta " + destinoNumero);
+    }    
 }
