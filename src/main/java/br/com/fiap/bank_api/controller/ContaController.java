@@ -68,3 +68,33 @@ public class ContaController {
     }
 }
  
+    // Encerrar Conta
+    @PutMapping("/{numero}/encerrar")
+    public ResponseEntity<String> encerrarConta(@PathVariable Long numero) {
+        Optional<Conta> contaOpt = repository.findById(numero);
+        if (contaOpt.isPresent()) {
+            Conta conta = contaOpt.get();
+            conta.setAtiva(false);
+            repository.save(conta);
+            return ResponseEntity.ok("Conta encerrada com sucesso.");
+        }
+        return ResponseEntity.notFound().build();
+    }
+ 
+    // Depósito
+    @PutMapping("/{numero}/depositar")
+    public ResponseEntity<Object> depositar(@PathVariable Long numero, @RequestParam double valor) {
+        if (valor <= 0) {
+            return ResponseEntity.badRequest().body("O valor do depósito deve ser maior que zero.");
+        }
+        return repository.findById(numero)
+                .map(conta -> {
+                    if (!conta.isAtiva()) {
+                        return ResponseEntity.badRequest().body("Conta inativa. Não é possível depositar.");
+                    }
+                    conta.setSaldoInicial(conta.getSaldoInicial() + valor);
+                    repository.save(conta);
+                    return ResponseEntity.ok(conta);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
