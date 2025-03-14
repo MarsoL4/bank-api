@@ -13,7 +13,7 @@ public class Conta {
     private Long id; // ID único gerado automaticamente
 
     @Column(nullable = false, unique = true)
-    private Long numero;
+    private Long numero; // Número da conta informado pelo usuário
 
     @Column(nullable = false)
     private Integer agencia;
@@ -31,7 +31,7 @@ public class Conta {
     private double saldoInicial;
 
     @Column(nullable = false)
-    private boolean ativa = true; // Conta sempre será cadastrada como ativa
+    private String ativa = "S";  // "S" = ativa, "N" = inativa
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

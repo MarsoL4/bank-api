@@ -55,7 +55,7 @@ public class ContaController {
             return ResponseEntity.badRequest().body("O saldo inicial não pode ser negativo.");
         }
 
-        conta.setAtiva(true); // Conta sempre começa ativa
+        conta.setAtiva("S"); // Conta sempre começa ativa com "S"
 
         log.info("Cadastrando conta número " + conta.getNumero());
         repository.save(conta);
@@ -67,7 +67,7 @@ public class ContaController {
         Optional<Conta> contaOpt = repository.findById(id);
         if (contaOpt.isPresent()) {
             Conta conta = contaOpt.get();
-            conta.setAtiva(false);
+            conta.setAtiva("N"); // Conta encerrada recebe "N"
             repository.save(conta);
             return ResponseEntity.ok("Conta encerrada com sucesso.");
         }
@@ -79,49 +79,49 @@ public class ContaController {
         if (valor <= 0) {
             return ResponseEntity.badRequest().body("O valor do depósito deve ser maior que zero.");
         }
-    
+
         Optional<Conta> contaOpt = repository.findById(id);
         if (contaOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-    
+
         Conta conta = contaOpt.get();
-        if (!conta.isAtiva()) {
+        if (!conta.getAtiva().equals("S")) {
             return ResponseEntity.badRequest().body("Conta inativa. Não é possível depositar.");
         }
-    
+
         conta.setSaldoInicial(conta.getSaldoInicial() + valor);
         repository.save(conta);
-    
+
         return ResponseEntity.ok(conta);
-    }    
+    }
 
     @PutMapping("/{id}/sacar")
     public ResponseEntity<Object> sacar(@PathVariable Long id, @RequestBody double valor) {
         if (valor <= 0) {
             return ResponseEntity.badRequest().body("O valor do saque deve ser maior que zero.");
         }
-    
+
         Optional<Conta> contaOpt = repository.findById(id);
         if (contaOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-    
+
         Conta conta = contaOpt.get();
-        if (!conta.isAtiva()) {
+        if (!conta.getAtiva().equals("S")) {
             return ResponseEntity.badRequest().body("Conta inativa. Não é possível sacar.");
         }
-    
+
         if (conta.getSaldoInicial() < valor) {
             return ResponseEntity.badRequest().body("Saldo insuficiente.");
         }
-    
+
         conta.setSaldoInicial(conta.getSaldoInicial() - valor);
         repository.save(conta);
-    
+
         return ResponseEntity.ok(conta);
     }
-    
+
     @PutMapping("/pix")
     public ResponseEntity<Object> transferirPix(
             @RequestParam Long origemId, 
@@ -142,8 +142,12 @@ public class ContaController {
         Conta contaOrigem = contaOrigemOpt.get();
         Conta contaDestino = contaDestinoOpt.get();
 
-        if (!contaOrigem.isAtiva() || !contaDestino.isAtiva()) {
+        if (!contaOrigem.getAtiva().equals("S") || !contaDestino.getAtiva().equals("S")) {
             return ResponseEntity.badRequest().body("Uma das contas está inativa. PIX não permitido.");
+        }
+
+        if (contaOrigem.getSaldoInicial() < valor) {
+            return ResponseEntity.badRequest().body("Saldo insuficiente para realizar o PIX.");
         }
 
         contaOrigem.setSaldoInicial(contaOrigem.getSaldoInicial() - valor);
