@@ -10,10 +10,10 @@ public class Conta {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // ID único gerado automaticamente
+    private Long id;
 
     @Column(nullable = false, unique = true)
-    private Long numero; // Número da conta informado pelo usuário
+    private Long numero;
 
     @Column(nullable = false)
     private Integer agencia;
