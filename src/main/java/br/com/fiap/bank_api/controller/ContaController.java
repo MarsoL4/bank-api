@@ -24,15 +24,14 @@ public class ContaController {
     @Autowired
     private ContaRepository repository;
 
-    //Busca todas as contas cadastradas
     @GetMapping
     public List<Conta> index() {
         return repository.findAll();
     }
 
-    @GetMapping("/{numero}")
-    public ResponseEntity<Conta> findByNumero(@PathVariable Long numero) {
-        return repository.findById(numero)
+    @GetMapping("/{id}")
+    public ResponseEntity<Conta> findById(@PathVariable Long id) {
+        return repository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -58,14 +57,14 @@ public class ContaController {
 
         conta.setAtiva(true); // Conta sempre começa ativa
 
-        log.info("Cadastrando conta para " + conta.getNomeTitular());
+        log.info("Cadastrando conta número " + conta.getNumero());
         repository.save(conta);
         return ResponseEntity.status(HttpStatus.CREATED).body(conta);
     }
 
-    @PutMapping("/{numero}/encerrar")
-    public ResponseEntity<String> encerrarConta(@PathVariable Long numero) {
-        Optional<Conta> contaOpt = repository.findById(numero);
+    @PutMapping("/{id}/encerrar")
+    public ResponseEntity<String> encerrarConta(@PathVariable Long id) {
+        Optional<Conta> contaOpt = repository.findById(id);
         if (contaOpt.isPresent()) {
             Conta conta = contaOpt.get();
             conta.setAtiva(false);
@@ -75,13 +74,13 @@ public class ContaController {
         return ResponseEntity.notFound().build();
     }
 
-    @PutMapping("/{numero}/depositar")
-    public ResponseEntity<Object> depositar(@PathVariable Long numero, @RequestParam double valor) {
+    @PutMapping("/{id}/depositar")
+    public ResponseEntity<Object> depositar(@PathVariable Long id, @RequestParam double valor) {
         if (valor <= 0) {
             return ResponseEntity.badRequest().body("O valor do depósito deve ser maior que zero.");
         }
 
-        Optional<Conta> contaOpt = repository.findById(numero);
+        Optional<Conta> contaOpt = repository.findById(id);
         if (contaOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -97,13 +96,14 @@ public class ContaController {
         return ResponseEntity.ok(conta);
     }
 
-    @PutMapping("/{numero}/sacar")
-    public ResponseEntity<Object> sacar(@PathVariable Long numero, @RequestParam double valor) {
+    
+    @PutMapping("/{id}/sacar")
+    public ResponseEntity<Object> sacar(@PathVariable Long id, @RequestParam double valor) {
         if (valor <= 0) {
             return ResponseEntity.badRequest().body("O valor do saque deve ser maior que zero.");
         }
 
-        Optional<Conta> contaOpt = repository.findById(numero);
+        Optional<Conta> contaOpt = repository.findById(id);
         if (contaOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -123,18 +123,19 @@ public class ContaController {
         return ResponseEntity.ok(conta);
     }
 
+    
     @PutMapping("/pix")
     public ResponseEntity<Object> transferirPix(
-            @RequestParam Long origemNumero, 
-            @RequestParam Long destinoNumero, 
+            @RequestParam Long origemId, 
+            @RequestParam Long destinoId, 
             @RequestParam double valor) {
         
         if (valor <= 0) {
             return ResponseEntity.badRequest().body("O valor do PIX deve ser maior que zero.");
         }
 
-        Optional<Conta> contaOrigemOpt = repository.findById(origemNumero);
-        Optional<Conta> contaDestinoOpt = repository.findById(destinoNumero);
+        Optional<Conta> contaOrigemOpt = repository.findById(origemId);
+        Optional<Conta> contaDestinoOpt = repository.findById(destinoId);
 
         if (contaOrigemOpt.isEmpty() || contaDestinoOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -157,6 +158,6 @@ public class ContaController {
         repository.save(contaOrigem);
         repository.save(contaDestino);
 
-        return ResponseEntity.ok("PIX de R$ " + valor + " realizado com sucesso para a conta " + destinoNumero);
+        return ResponseEntity.ok("PIX de R$ " + valor + " realizado com sucesso para a conta " + destinoId);
     }
 }
