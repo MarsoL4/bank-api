@@ -29,11 +29,9 @@ public class Conta {
     private double saldoInicial;
 
     @Column(nullable = false)
-    private boolean ativa;
+    private boolean ativa = true;  // Conta sempre começa ativa
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TipoConta tipo;
-
-    
 }
