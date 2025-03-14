@@ -1,21 +1,39 @@
 package br.com.fiap.bank_api.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Data;
+
+import java.time.LocalDate;
 
 @Entity
 @Data
 public class Conta {
+
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long numero;
-    //private agencia;
-    private String nomeTitular; //obrigatório
-    //private cpf; //obrigatório
-    //private dataAbertura; //não pode ser no futuro
-    private double saldoInicial; //não pode ser negativo
-    //private ativa;
-    //private tipo; // deve ser APENAS corrente, poupança ou salário
+
+    @Column(nullable = false)
+    private Integer agencia;
+
+    @Column(nullable = false)
+    private String nomeTitular;
+
+    @Column(nullable = false, unique = true)
+    private String cpf;
+
+    @Column(nullable = false)
+    private LocalDate dataAbertura;
+
+    @Column(nullable = false)
+    private double saldoInicial;
+
+    @Column(nullable = false)
+    private boolean ativa;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TipoConta tipo;
 
     
 }
