@@ -98,3 +98,58 @@ public class ContaController {
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
+
+    // Saque
+    @PutMapping("/{numero}/sacar")
+    public ResponseEntity<Object> sacar(@PathVariable Long numero, @RequestParam double valor) {
+        if (valor <= 0) {
+            return ResponseEntity.badRequest().body("O valor do saque deve ser maior que zero.");
+        }
+        return repository.findById(numero)
+                .map(conta -> {
+                    if (!conta.isAtiva()) {
+                        return ResponseEntity.badRequest().body("Conta inativa. Não é possível sacar.");
+                    }
+                    if (conta.getSaldoInicial() < valor) {
+                        return ResponseEntity.badRequest().body("Saldo insuficiente.");
+                    }
+                    conta.setSaldoInicial(conta.getSaldoInicial() - valor);
+                    repository.save(conta);
+                    return ResponseEntity.ok(conta);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }    
+ 
+    // Pix
+    @PutMapping("/pix")
+    public ResponseEntity<Object> transferirPix(@RequestParam Long origemNumero, @RequestParam Long destinoNumero, @RequestParam double valor) {
+        if (valor <= 0) {
+            return ResponseEntity.badRequest().body("O valor do PIX deve ser maior que zero.");
+        }
+ 
+        Optional<Conta> contaOrigemOpt = repository.findById(origemNumero);
+        Optional<Conta> contaDestinoOpt = repository.findById(destinoNumero);
+ 
+        if (contaOrigemOpt.isEmpty() || contaDestinoOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+ 
+        Conta contaOrigem = contaOrigemOpt.get();
+        Conta contaDestino = contaDestinoOpt.get();
+ 
+        if (!contaOrigem.isAtiva() || !contaDestino.isAtiva()) {
+            return ResponseEntity.badRequest().body("Uma das contas está inativa. PIX não permitido.");
+        }
+ 
+        if (contaOrigem.getSaldoInicial() < valor) {
+            return ResponseEntity.badRequest().body("Saldo insuficiente para realizar o PIX.");
+        }
+ 
+        contaOrigem.setSaldoInicial(contaOrigem.getSaldoInicial() - valor);
+        contaDestino.setSaldoInicial(contaDestino.getSaldoInicial() + valor);
+ 
+        repository.save(contaOrigem);
+        repository.save(contaDestino);
+ 
+        return ResponseEntity.ok("PIX realizado com sucesso.");
+    }
