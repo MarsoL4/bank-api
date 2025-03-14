@@ -75,54 +75,52 @@ public class ContaController {
     }
 
     @PutMapping("/{id}/depositar")
-    public ResponseEntity<Object> depositar(@PathVariable Long id, @RequestParam double valor) {
+    public ResponseEntity<Object> depositar(@PathVariable Long id, @RequestBody double valor) {
         if (valor <= 0) {
             return ResponseEntity.badRequest().body("O valor do depósito deve ser maior que zero.");
         }
-
+    
         Optional<Conta> contaOpt = repository.findById(id);
         if (contaOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-
+    
         Conta conta = contaOpt.get();
         if (!conta.isAtiva()) {
             return ResponseEntity.badRequest().body("Conta inativa. Não é possível depositar.");
         }
-
+    
         conta.setSaldoInicial(conta.getSaldoInicial() + valor);
         repository.save(conta);
-
-        return ResponseEntity.ok(conta);
-    }
-
     
+        return ResponseEntity.ok(conta);
+    }    
+
     @PutMapping("/{id}/sacar")
-    public ResponseEntity<Object> sacar(@PathVariable Long id, @RequestParam double valor) {
+    public ResponseEntity<Object> sacar(@PathVariable Long id, @RequestBody double valor) {
         if (valor <= 0) {
             return ResponseEntity.badRequest().body("O valor do saque deve ser maior que zero.");
         }
-
+    
         Optional<Conta> contaOpt = repository.findById(id);
         if (contaOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-
+    
         Conta conta = contaOpt.get();
         if (!conta.isAtiva()) {
             return ResponseEntity.badRequest().body("Conta inativa. Não é possível sacar.");
         }
-
+    
         if (conta.getSaldoInicial() < valor) {
             return ResponseEntity.badRequest().body("Saldo insuficiente.");
         }
-
+    
         conta.setSaldoInicial(conta.getSaldoInicial() - valor);
         repository.save(conta);
-
+    
         return ResponseEntity.ok(conta);
     }
-
     
     @PutMapping("/pix")
     public ResponseEntity<Object> transferirPix(
@@ -148,16 +146,12 @@ public class ContaController {
             return ResponseEntity.badRequest().body("Uma das contas está inativa. PIX não permitido.");
         }
 
-        if (contaOrigem.getSaldoInicial() < valor) {
-            return ResponseEntity.badRequest().body("Saldo insuficiente para realizar o PIX.");
-        }
-
         contaOrigem.setSaldoInicial(contaOrigem.getSaldoInicial() - valor);
         contaDestino.setSaldoInicial(contaDestino.getSaldoInicial() + valor);
 
         repository.save(contaOrigem);
         repository.save(contaDestino);
 
-        return ResponseEntity.ok("PIX de R$ " + valor + " realizado com sucesso para a conta " + destinoId);
+        return ResponseEntity.ok("PIX realizado com sucesso.");
     }
 }

@@ -2,7 +2,6 @@ package br.com.fiap.bank_api.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.time.LocalDate;
 
 @Entity
@@ -11,7 +10,7 @@ public class Conta {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; // ID único gerado automaticamente
 
     @Column(nullable = false, unique = true)
     private Long numero;
@@ -32,7 +31,7 @@ public class Conta {
     private double saldoInicial;
 
     @Column(nullable = false)
-    private boolean ativa = true;  // Conta sempre começa ativa
+    private boolean ativa = true; // Conta sempre será cadastrada como ativa
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
