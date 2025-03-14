@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import br.com.fiap.bank_api.dto.PixRequest;
 import br.com.fiap.bank_api.model.Conta;
 import br.com.fiap.bank_api.repository.ContaRepository;
 import jakarta.validation.Valid;
@@ -123,17 +124,14 @@ public class ContaController {
     }
 
     @PutMapping("/pix")
-    public ResponseEntity<Object> transferirPix(
-            @RequestParam Long origemId, 
-            @RequestParam Long destinoId, 
-            @RequestParam double valor) {
+    public ResponseEntity<Object> transferirPix(@RequestBody PixRequest request) {
         
-        if (valor <= 0) {
+        if (request.getValor() <= 0) {
             return ResponseEntity.badRequest().body("O valor do PIX deve ser maior que zero.");
         }
 
-        Optional<Conta> contaOrigemOpt = repository.findById(origemId);
-        Optional<Conta> contaDestinoOpt = repository.findById(destinoId);
+        Optional<Conta> contaOrigemOpt = repository.findById(request.getOrigemId());
+        Optional<Conta> contaDestinoOpt = repository.findById(request.getDestinoId());
 
         if (contaOrigemOpt.isEmpty() || contaDestinoOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -146,16 +144,16 @@ public class ContaController {
             return ResponseEntity.badRequest().body("Uma das contas está inativa. PIX não permitido.");
         }
 
-        if (contaOrigem.getSaldoInicial() < valor) {
+        if (contaOrigem.getSaldoInicial() < request.getValor()) {
             return ResponseEntity.badRequest().body("Saldo insuficiente para realizar o PIX.");
         }
 
-        contaOrigem.setSaldoInicial(contaOrigem.getSaldoInicial() - valor);
-        contaDestino.setSaldoInicial(contaDestino.getSaldoInicial() + valor);
+        contaOrigem.setSaldoInicial(contaOrigem.getSaldoInicial() - request.getValor());
+        contaDestino.setSaldoInicial(contaDestino.getSaldoInicial() + request.getValor());
 
         repository.save(contaOrigem);
         repository.save(contaDestino);
 
-        return ResponseEntity.ok("PIX realizado com sucesso.");
+        return ResponseEntity.ok("PIX de R$ " + request.getValor() + " realizado com sucesso para a conta " + request.getDestinoId());
     }
 }
