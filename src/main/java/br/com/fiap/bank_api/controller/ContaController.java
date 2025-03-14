@@ -30,14 +30,12 @@ public class ContaController {
         return repository.findAll();
     }
 
- 
     @GetMapping("/{numero}")
     public ResponseEntity<Conta> findByNumero(@PathVariable Long numero) {
         return repository.findById(numero)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-
 
     @GetMapping("/cpf/{cpf}")
     public ResponseEntity<Conta> findByCpf(@PathVariable String cpf) {
@@ -48,7 +46,6 @@ public class ContaController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
- 
     @PostMapping("cadastrar")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<Object> create(@Valid @RequestBody Conta conta) {
@@ -59,14 +56,13 @@ public class ContaController {
             return ResponseEntity.badRequest().body("O saldo inicial não pode ser negativo.");
         }
 
-        conta.setAtiva(true); // Conta nova deve começar ativa
+        conta.setAtiva(true); // Conta sempre começa ativa
 
-        log.info("Cadastrando conta " + conta.getNumero());
+        log.info("Cadastrando conta para " + conta.getNomeTitular());
         repository.save(conta);
         return ResponseEntity.status(HttpStatus.CREATED).body(conta);
     }
 
- 
     @PutMapping("/{numero}/encerrar")
     public ResponseEntity<String> encerrarConta(@PathVariable Long numero) {
         Optional<Conta> contaOpt = repository.findById(numero);
@@ -84,52 +80,49 @@ public class ContaController {
         if (valor <= 0) {
             return ResponseEntity.badRequest().body("O valor do depósito deve ser maior que zero.");
         }
-    
+
         Optional<Conta> contaOpt = repository.findById(numero);
         if (contaOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-    
+
         Conta conta = contaOpt.get();
         if (!conta.isAtiva()) {
             return ResponseEntity.badRequest().body("Conta inativa. Não é possível depositar.");
         }
-    
+
         conta.setSaldoInicial(conta.getSaldoInicial() + valor);
         repository.save(conta);
-    
+
         return ResponseEntity.ok(conta);
     }
-    
-    
+
     @PutMapping("/{numero}/sacar")
     public ResponseEntity<Object> sacar(@PathVariable Long numero, @RequestParam double valor) {
         if (valor <= 0) {
             return ResponseEntity.badRequest().body("O valor do saque deve ser maior que zero.");
         }
-    
+
         Optional<Conta> contaOpt = repository.findById(numero);
         if (contaOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-    
+
         Conta conta = contaOpt.get();
         if (!conta.isAtiva()) {
             return ResponseEntity.badRequest().body("Conta inativa. Não é possível sacar.");
         }
-    
+
         if (conta.getSaldoInicial() < valor) {
             return ResponseEntity.badRequest().body("Saldo insuficiente.");
         }
-    
+
         conta.setSaldoInicial(conta.getSaldoInicial() - valor);
         repository.save(conta);
-    
+
         return ResponseEntity.ok(conta);
     }
-       
 
- 
     @PutMapping("/pix")
     public ResponseEntity<Object> transferirPix(
             @RequestParam Long origemNumero, 
@@ -139,32 +132,31 @@ public class ContaController {
         if (valor <= 0) {
             return ResponseEntity.badRequest().body("O valor do PIX deve ser maior que zero.");
         }
-    
+
         Optional<Conta> contaOrigemOpt = repository.findById(origemNumero);
         Optional<Conta> contaDestinoOpt = repository.findById(destinoNumero);
-    
+
         if (contaOrigemOpt.isEmpty() || contaDestinoOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-    
+
         Conta contaOrigem = contaOrigemOpt.get();
         Conta contaDestino = contaDestinoOpt.get();
-    
+
         if (!contaOrigem.isAtiva() || !contaDestino.isAtiva()) {
             return ResponseEntity.badRequest().body("Uma das contas está inativa. PIX não permitido.");
         }
-    
+
         if (contaOrigem.getSaldoInicial() < valor) {
             return ResponseEntity.badRequest().body("Saldo insuficiente para realizar o PIX.");
         }
-    
-        // Transferência de valores
+
         contaOrigem.setSaldoInicial(contaOrigem.getSaldoInicial() - valor);
         contaDestino.setSaldoInicial(contaDestino.getSaldoInicial() + valor);
-    
+
         repository.save(contaOrigem);
         repository.save(contaDestino);
-    
+
         return ResponseEntity.ok("PIX de R$ " + valor + " realizado com sucesso para a conta " + destinoNumero);
-    }    
+    }
 }
